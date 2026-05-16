@@ -561,6 +561,13 @@ a { color: inherit; text-decoration: none; }
     margin-bottom: 0.85rem;
 }
 
+.legal-section a {
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.legal-section a:hover { text-decoration: underline; }
+
 /* ------------------------------------------------------------------ */
 /* Responsive                                                          */
 /* ------------------------------------------------------------------ */
