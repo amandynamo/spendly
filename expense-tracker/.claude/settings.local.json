@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(taskkill *)"
+      "Bash(taskkill *)",
+      "Bash(git checkout *)"
     ]
   }
 }
