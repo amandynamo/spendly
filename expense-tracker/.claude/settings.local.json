@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(taskkill *)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Read(//c/Users/aman_sharma/.claude/plugins/cache/agents-observe/agents-observe/0.9.11/skills/observe/**)",
+      "Bash(bash scripts/cli.sh logs-cli -n 20)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\aman_sharma\\\\Desktop\\\\llm_training\\\\expense-tracker\\\\expense-tracker\")",
+      "Bash(Select-Object Name, PSIsContainer)"
     ]
   }
 }
