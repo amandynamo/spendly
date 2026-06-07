@@ -17,6 +17,32 @@
         </div>
     </div>
 
+    <!-- Date filter bar -->
+    <div class="profile-filter-bar">
+        {% for p in presets %}
+            {% if p.start %}
+            <a href="{{ url_for('profile') }}?start={{ p.start }}&end={{ p.end }}"
+               class="filter-btn{% if active_period == p.label %} active{% endif %}">
+                {{ p.label }}
+            </a>
+            {% else %}
+            <a href="{{ url_for('profile') }}"
+               class="filter-btn{% if active_period == p.label %} active{% endif %}">
+                {{ p.label }}
+            </a>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <details class="profile-filter-custom">
+        <summary>Custom range</summary>
+        <form method="GET" action="/profile" class="filter-custom-form">
+            <input type="date" name="start" value="{{ filter_start or '' }}">
+            <input type="date" name="end"   value="{{ filter_end   or '' }}">
+            <button type="submit" class="btn-ghost">Apply</button>
+        </form>
+    </details>
+
     <!-- Stats row -->
     <div class="profile-stats">
         <div class="stat-card">
@@ -38,7 +64,7 @@
 
         <!-- Recent transactions -->
         <div class="profile-panel">
-            <h2 class="panel-title">Recent Transactions</h2>
+            <h2 class="panel-title">Transactions{% if active_period and active_period != 'All Time' %} — {{ active_period }}{% endif %}</h2>
             <div class="panel-card">
                 {% if transactions %}
                 <table class="expense-table">

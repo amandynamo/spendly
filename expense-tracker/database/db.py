@@ -123,36 +123,47 @@ def create_user(name, email, password_hash):
         conn.close()
 
 
-def get_recent_expenses(user_id, limit=5):
+def get_recent_expenses(user_id, limit=5, start_date=None, end_date=None):
     conn = get_db()
     try:
+        date_clause = ''
+        params = [user_id]
+        if start_date and end_date:
+            date_clause = ' AND date BETWEEN ? AND ?'
+            params += [start_date, end_date]
         cursor = conn.execute(
             'SELECT date, description, category, amount '
             'FROM expenses '
-            'WHERE user_id = ? '
-            'ORDER BY date DESC, id DESC '
+            'WHERE user_id = ?' + date_clause +
+            ' ORDER BY date DESC, id DESC '
             'LIMIT ?',
-            (user_id, limit)
+            tuple(params) + (limit,)
         )
         return [dict(row) for row in cursor.fetchall()]
     finally:
         conn.close()
 
 
-def get_profile_stats(user_id):
+def get_profile_stats(user_id, start_date=None, end_date=None):
     conn = get_db()
     try:
+        date_clause = ''
+        params = [user_id]
+        if start_date and end_date:
+            date_clause = ' AND date BETWEEN ? AND ?'
+            params += [start_date, end_date]
         cursor = conn.execute(
-            'SELECT SUM(amount), COUNT(*) FROM expenses WHERE user_id = ?',
-            (user_id,)
+            'SELECT SUM(amount), COUNT(*) FROM expenses WHERE user_id = ?' + date_clause,
+            tuple(params)
         )
         row = cursor.fetchone()
         total_spent = row[0] if row[0] is not None else 0.0
         transaction_count = row[1] if row[1] is not None else 0
 
         cursor = conn.execute(
-            'SELECT category FROM expenses WHERE user_id = ? GROUP BY category ORDER BY SUM(amount) DESC LIMIT 1',
-            (user_id,)
+            'SELECT category FROM expenses WHERE user_id = ?' + date_clause +
+            ' GROUP BY category ORDER BY SUM(amount) DESC LIMIT 1',
+            tuple(params)
         )
         top_row = cursor.fetchone()
         top_category = top_row[0] if top_row is not None else '—'
@@ -166,12 +177,18 @@ def get_profile_stats(user_id):
         conn.close()
 
 
-def get_category_breakdown(user_id):
+def get_category_breakdown(user_id, start_date=None, end_date=None):
     conn = get_db()
     try:
+        date_clause = ''
+        params = [user_id]
+        if start_date and end_date:
+            date_clause = ' AND date BETWEEN ? AND ?'
+            params += [start_date, end_date]
         cursor = conn.execute(
-            'SELECT category, SUM(amount) AS total FROM expenses WHERE user_id = ? GROUP BY category ORDER BY total DESC',
-            (user_id,)
+            'SELECT category, SUM(amount) AS total FROM expenses WHERE user_id = ?' + date_clause +
+            ' GROUP BY category ORDER BY total DESC',
+            tuple(params)
         )
         rows = cursor.fetchall()
         if not rows:
