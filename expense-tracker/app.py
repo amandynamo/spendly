@@ -119,6 +119,11 @@ def profile():
     }
     stats = get_profile_stats(user_id)
     transactions = get_recent_expenses(user_id)
+    for t in transactions:
+        try:
+            t['date_display'] = datetime.strptime(t['date'], '%Y-%m-%d').strftime('%d %b %Y')
+        except ValueError:
+            t['date_display'] = t['date']
     categories = get_category_breakdown(user_id)
     return render_template('profile.html',
                            user=user, stats=stats,
