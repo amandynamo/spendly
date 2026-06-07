@@ -621,6 +621,66 @@ a { color: inherit; text-decoration: none; }
     gap: 1.5rem;
 }
 
+/* ---- Date filter bar ---- */
+
+.profile-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.filter-btn {
+    background: transparent;
+    color: var(--ink-muted);
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    text-decoration: none;
+    transition: all 0.15s;
+}
+
+.filter-btn:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+}
+
+.filter-btn.active {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-color: var(--accent-light);
+}
+
+.profile-filter-custom {
+    font-size: 0.9rem;
+    color: var(--ink-muted);
+}
+
+.profile-filter-custom summary {
+    cursor: pointer;
+    font-weight: 500;
+    user-select: none;
+}
+
+.filter-custom-form {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.filter-custom-form input[type="date"] {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.4rem 0.6rem;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--ink);
+    background: var(--paper-card);
+}
+
 /* ---- Header card ---- */
 
 .profile-header {

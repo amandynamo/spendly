@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, g
 from functools import wraps
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from database.db import get_db, init_db, seed_db, create_user, get_user_by_email, get_user_by_id, get_profile_stats, get_recent_expenses, get_category_breakdown
 
@@ -84,7 +84,7 @@ def login():
 
     session.clear()
     session['user_id'] = user['id']
-    return redirect(url_for('landing'))
+    return redirect(url_for('profile'))
 
 
 @app.route("/terms")
@@ -117,17 +117,57 @@ def profile():
         'email': g.user['email'],
         'member_since': member_since,
     }
-    stats = get_profile_stats(user_id)
-    transactions = get_recent_expenses(user_id)
+
+    # Parse and validate date filter query params
+    raw_start = request.args.get('start', '')
+    raw_end   = request.args.get('end', '')
+    filter_start = filter_end = None
+    try:
+        if raw_start and raw_end:
+            parsed_start = datetime.strptime(raw_start, '%Y-%m-%d')
+            parsed_end   = datetime.strptime(raw_end,   '%Y-%m-%d')
+            if parsed_start <= parsed_end:
+                filter_start, filter_end = raw_start, raw_end
+    except ValueError:
+        pass
+
+    # Compute preset date ranges
+    today            = date.today()
+    month_start      = today.replace(day=1)
+    last_month_end   = month_start - timedelta(days=1)
+    last_month_start = last_month_end.replace(day=1)
+
+    presets = [
+        {'label': 'This Month',    'start': month_start.isoformat(),                    'end': today.isoformat()},
+        {'label': 'Last Month',    'start': last_month_start.isoformat(),               'end': last_month_end.isoformat()},
+        {'label': 'Last 3 Months', 'start': (today - timedelta(days=90)).isoformat(),   'end': today.isoformat()},
+        {'label': 'Last 6 Months', 'start': (today - timedelta(days=180)).isoformat(),  'end': today.isoformat()},
+        {'label': 'All Time',      'start': None,                                        'end': None},
+    ]
+
+    active_period = 'All Time' if not filter_start else None
+    for p in presets:
+        if p['start'] == filter_start and p['end'] == filter_end:
+            active_period = p['label']
+            break
+
+    expense_limit = 50 if filter_start else 5
+    stats        = get_profile_stats(user_id, filter_start, filter_end)
+    transactions = get_recent_expenses(user_id, limit=expense_limit,
+                                       start_date=filter_start, end_date=filter_end)
     for t in transactions:
         try:
             t['date_display'] = datetime.strptime(t['date'], '%Y-%m-%d').strftime('%d %b %Y')
         except ValueError:
             t['date_display'] = t['date']
-    categories = get_category_breakdown(user_id)
+    categories = get_category_breakdown(user_id, filter_start, filter_end)
+
     return render_template('profile.html',
                            user=user, stats=stats,
-                           transactions=transactions, categories=categories)
+                           transactions=transactions, categories=categories,
+                           presets=presets,
+                           filter_start=filter_start, filter_end=filter_end,
+                           active_period=active_period)
 
 
 @app.route("/expenses/add")
