@@ -121,3 +121,75 @@ def create_user(name, email, password_hash):
         return cursor.lastrowid
     finally:
         conn.close()
+
+
+def get_recent_expenses(user_id, limit=5):
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            'SELECT date, description, category, amount '
+            'FROM expenses '
+            'WHERE user_id = ? '
+            'ORDER BY date DESC, id DESC '
+            'LIMIT ?',
+            (user_id, limit)
+        )
+        return [dict(row) for row in cursor.fetchall()]
+    finally:
+        conn.close()
+
+
+def get_profile_stats(user_id):
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            'SELECT SUM(amount), COUNT(*) FROM expenses WHERE user_id = ?',
+            (user_id,)
+        )
+        row = cursor.fetchone()
+        total_spent = row[0] if row[0] is not None else 0.0
+        transaction_count = row[1] if row[1] is not None else 0
+
+        cursor = conn.execute(
+            'SELECT category FROM expenses WHERE user_id = ? GROUP BY category ORDER BY SUM(amount) DESC LIMIT 1',
+            (user_id,)
+        )
+        top_row = cursor.fetchone()
+        top_category = top_row[0] if top_row is not None else '—'
+
+        return {
+            'total_spent': float(total_spent),
+            'transaction_count': int(transaction_count),
+            'top_category': top_category,
+        }
+    finally:
+        conn.close()
+
+
+def get_category_breakdown(user_id):
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            'SELECT category, SUM(amount) AS total FROM expenses WHERE user_id = ? GROUP BY category ORDER BY total DESC',
+            (user_id,)
+        )
+        rows = cursor.fetchall()
+        if not rows:
+            return []
+        grand_total = sum(row['total'] for row in rows)
+        if grand_total == 0:
+            return []
+        result = [
+            {
+                'name': row['category'],
+                'total': float(row['total']),
+                'pct': int(float(row['total']) / grand_total * 100),
+            }
+            for row in rows
+        ]
+        pct_sum = sum(item['pct'] for item in result)
+        if pct_sum != 100:
+            result[0]['pct'] += (100 - pct_sum)
+        return result
+    finally:
+        conn.close()

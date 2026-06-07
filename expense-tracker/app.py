@@ -1,7 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session, g
 from functools import wraps
+from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
-from database.db import get_db, init_db, seed_db, create_user, get_user_by_email, get_user_by_id
+from database.db import get_db, init_db, seed_db, create_user, get_user_by_email, get_user_by_id, get_profile_stats, get_recent_expenses, get_category_breakdown
 
 app = Flask(__name__)
 app.secret_key = 'spendly-dev-secret-key'
@@ -109,31 +110,16 @@ def logout():
 @app.route("/profile")
 @login_required
 def profile():
+    user_id = g.user['id']
+    member_since = datetime.strptime(g.user['created_at'], '%Y-%m-%d %H:%M:%S').strftime('%B %Y')
     user = {
-        'name': 'Alex Johnson',
-        'email': 'alex@example.com',
-        'member_since': 'January 2024',
+        'name': g.user['name'],
+        'email': g.user['email'],
+        'member_since': member_since,
     }
-    stats = {
-        'total_spent': 1247.50,
-        'transaction_count': 23,
-        'top_category': 'Food',
-    }
-    transactions = [
-        {'date': '2026-05-08', 'description': 'Gift for friend',   'category': 'Other',         'amount': 22.50},
-        {'date': '2026-05-07', 'description': 'Stationery',        'category': 'Other',         'amount': 15.75},
-        {'date': '2026-05-06', 'description': 'New clothes',       'category': 'Shopping',      'amount': 67.25},
-        {'date': '2026-05-05', 'description': 'Movie tickets',     'category': 'Entertainment', 'amount': 30.00},
-        {'date': '2026-05-04', 'description': 'Pharmacy purchase', 'category': 'Health',        'amount': 45.99},
-    ]
-    categories = [
-        {'name': 'Food',          'total': 412.50, 'pct': 33},
-        {'name': 'Transport',     'total': 225.00, 'pct': 18},
-        {'name': 'Bills',         'total': 285.30, 'pct': 23},
-        {'name': 'Health',        'total': 145.99, 'pct': 12},
-        {'name': 'Entertainment', 'total':  90.00, 'pct':  7},
-        {'name': 'Shopping',      'total':  88.71, 'pct':  7},
-    ]
+    stats = get_profile_stats(user_id)
+    transactions = get_recent_expenses(user_id)
+    categories = get_category_breakdown(user_id)
     return render_template('profile.html',
                            user=user, stats=stats,
                            transactions=transactions, categories=categories)
