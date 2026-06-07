@@ -4,87 +4,97 @@
 
 {% block content %}
 <section class="profile-page">
-    <div class="profile-grid">
 
-        <!-- Sidebar: user info card -->
-        <aside>
-            <div class="profile-card">
-                <div class="avatar">
-                    {{ user.name.split()[0][0] | upper }}{{ user.name.split()[-1][0] | upper }}
-                </div>
-                <p class="profile-name">{{ user.name }}</p>
-                <p class="profile-meta">{{ user.email }}</p>
-                <p class="profile-meta">Member since {{ user.member_since }}</p>
+    <!-- Header: avatar + user info -->
+    <div class="profile-header">
+        <div class="profile-avatar">
+            {{ user.name.split()[0][0] | upper }}{{ user.name.split()[-1][0] | upper }}
+        </div>
+        <div class="profile-user-info">
+            <h1 class="profile-name">{{ user.name.split()[0] }}</h1>
+            <p class="profile-email">{{ user.email }}</p>
+            <p class="profile-since">Member since {{ user.member_since }}</p>
+        </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="profile-stats">
+        <div class="stat-card">
+            <div class="stat-card__label">Total Spent</div>
+            <div class="stat-card__value">₹{{ "%.2f"|format(stats.total_spent) }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card__label">Transactions</div>
+            <div class="stat-card__value">{{ stats.transaction_count }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card__label">Top Category</div>
+            <div class="stat-card__value">{{ stats.top_category }}</div>
+        </div>
+    </div>
+
+    <!-- Bottom: transactions (left) + category breakdown (right) -->
+    <div class="profile-bottom">
+
+        <!-- Recent transactions -->
+        <div class="profile-panel">
+            <h2 class="panel-title">Recent Transactions</h2>
+            <div class="panel-card">
+                {% if transactions %}
+                <table class="expense-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th class="amount">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in transactions %}
+                        <tr>
+                            <td class="date">{{ t.date_display }}</td>
+                            <td>{{ t.description }}</td>
+                            <td>
+                                <span class="cat-badge cat-{{ t.category | lower }}">
+                                    {{ t.category }}
+                                </span>
+                            </td>
+                            <td class="amount">₹{{ "%.2f"|format(t.amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="panel-empty">No transactions yet.</div>
+                {% endif %}
             </div>
-        </aside>
+        </div>
 
-        <!-- Main content -->
-        <div class="profile-main">
-
-            <!-- Summary stats -->
-            <div class="stats-row">
-                <div class="stat-box">
-                    <div class="stat-box__value">₹{{ "%.2f"|format(stats.total_spent) }}</div>
-                    <div class="stat-box__label">Total Spent</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-box__value">{{ stats.transaction_count }}</div>
-                    <div class="stat-box__label">Transactions</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-box__value">{{ stats.top_category }}</div>
-                    <div class="stat-box__label">Top Category</div>
-                </div>
-            </div>
-
-            <!-- Transaction history -->
-            <div>
-                <p class="section-title">Recent Transactions</p>
-                <div class="profile-card profile-card--table">
-                    <table class="expense-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Description</th>
-                                <th>Category</th>
-                                <th class="amount">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for t in transactions %}
-                            <tr>
-                                <td class="date">{{ t.date }}</td>
-                                <td>{{ t.description }}</td>
-                                <td>
-                                    <span class="badge badge--{{ t.category | lower }}">
-                                        {{ t.category }}
-                                    </span>
-                                </td>
-                                <td class="amount">₹{{ "%.2f"|format(t.amount) }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Category breakdown -->
-            <div>
-                <p class="section-title">Spending by Category</p>
-                <div class="profile-card">
-                    {% for cat in categories %}
-                    <div class="cat-row">
-                        <span class="cat-row__name">{{ cat.name }}</span>
-                        <div class="bar-track">
-                            <div class="bar-fill" style="width: {{ cat.pct }}%"></div>
-                        </div>
-                        <span class="cat-row__total">₹{{ "%.2f"|format(cat.total) }}</span>
+        <!-- By category -->
+        <div class="profile-panel">
+            <h2 class="panel-title">By Category</h2>
+            <div class="panel-card">
+                {% if categories %}
+                {% for cat in categories %}
+                <div class="cat-breakdown-row">
+                    <div class="cat-breakdown-header">
+                        <span class="cat-breakdown-name">{{ cat.name }}</span>
+                        <span class="cat-breakdown-amount">₹{{ "%.2f"|format(cat.total) }}</span>
                     </div>
-                    {% endfor %}
+                    <div class="cat-bar-track">
+                        <div class="cat-bar-fill cat-bar--{{ cat.name | lower }}"
+                             style="width: {{ cat.pct }}%"></div>
+                    </div>
                 </div>
+                {% endfor %}
+                {% else %}
+                <div class="panel-empty">No spending data yet.</div>
+                {% endif %}
             </div>
+        </div>
 
-        </div><!-- /profile-main -->
-    </div><!-- /profile-grid -->
+    </div><!-- /profile-bottom -->
+
 </section>
 {% endblock %}
