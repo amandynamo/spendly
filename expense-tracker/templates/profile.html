@@ -24,7 +24,7 @@
             <!-- Summary stats -->
             <div class="stats-row">
                 <div class="stat-box">
-                    <div class="stat-box__value">${{ "%.2f"|format(stats.total_spent) }}</div>
+                    <div class="stat-box__value">₹{{ "%.2f"|format(stats.total_spent) }}</div>
                     <div class="stat-box__label">Total Spent</div>
                 </div>
                 <div class="stat-box">
@@ -60,7 +60,7 @@
                                         {{ t.category }}
                                     </span>
                                 </td>
-                                <td class="amount">${{ "%.2f"|format(t.amount) }}</td>
+                                <td class="amount">₹{{ "%.2f"|format(t.amount) }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -78,7 +78,7 @@
                         <div class="bar-track">
                             <div class="bar-fill" style="width: {{ cat.pct }}%"></div>
                         </div>
-                        <span class="cat-row__total">${{ "%.2f"|format(cat.total) }}</span>
+                        <span class="cat-row__total">₹{{ "%.2f"|format(cat.total) }}</span>
                     </div>
                     {% endfor %}
                 </div>
