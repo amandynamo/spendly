@@ -197,7 +197,7 @@ def get_recent_expenses(user_id, limit=5, start_date=None, end_date=None):
             date_clause = ' AND date BETWEEN ? AND ?'
             params += [start_date, end_date]
         cursor = conn.execute(
-            'SELECT date, description, category, amount '
+            'SELECT id, date, description, category, amount '
             'FROM expenses '
             'WHERE user_id = ?' + date_clause +
             ' ORDER BY date DESC, id DESC '
@@ -238,6 +238,19 @@ def get_profile_stats(user_id, start_date=None, end_date=None):
             'transaction_count': int(transaction_count),
             'top_category': top_category,
         }
+    finally:
+        conn.close()
+
+
+def delete_expense(expense_id, user_id):
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            'DELETE FROM expenses WHERE id = ? AND user_id = ?',
+            (expense_id, user_id)
+        )
+        conn.commit()
+        return cursor.rowcount
     finally:
         conn.close()
 
