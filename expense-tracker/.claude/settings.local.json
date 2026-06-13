@@ -8,7 +8,9 @@
       "Bash(Get-ChildItem \"C:\\\\Users\\\\aman_sharma\\\\Desktop\\\\llm_training\\\\expense-tracker\\\\expense-tracker\")",
       "Bash(Select-Object Name, PSIsContainer)",
       "Bash(python -c ' *)",
-      "Bash(powershell *)"
+      "Bash(powershell *)",
+      "mcp__database-server__list_tables",
+      "mcp__database-server__read_query"
     ]
   }
 }

@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics — Spendly{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  .analytics-page       { max-width: 900px; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
+  .analytics-heading    { font-family: var(--font-display); font-size: 2.2rem; color: var(--ink); margin: 0 0 0.25rem; }
+  .analytics-sub        { font-size: 0.95rem; color: var(--ink-muted); margin: 0 0 2.5rem; }
+
+  /* Stat cards */
+  .stat-grid            { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2.5rem; }
+  .stat-card            { background: var(--paper-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem 1.5rem; }
+  .stat-card__label     { font-size: 0.8rem; color: var(--ink-muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 0.4rem; }
+  .stat-card__value     { font-family: var(--font-display); font-size: 1.7rem; color: var(--ink); }
+  .stat-card__value.accent { color: var(--accent); }
+
+  /* Chart panels */
+  .charts-grid          { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .chart-panel          { background: var(--paper-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.5rem; }
+  .chart-panel__title   { font-size: 0.9rem; font-weight: 600; color: var(--ink-soft); margin: 0 0 1.25rem; }
+  .chart-wrap           { position: relative; height: 220px; }
+
+  /* Empty state */
+  .analytics-empty      { text-align: center; padding: 4rem 1rem; color: var(--ink-muted); }
+  .analytics-empty a    { color: var(--accent); text-decoration: none; font-weight: 500; }
+
+  @media (max-width: 700px) {
+    .stat-grid   { grid-template-columns: 1fr 1fr; }
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 420px) {
+    .stat-grid { grid-template-columns: 1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="analytics-page">
+
+  <h1 class="analytics-heading">Analytics</h1>
+  <p class="analytics-sub">A summary of your spending over time.</p>
+
+  {% if has_data %}
+
+  <!-- Stat cards -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-card__label">Total Spent</div>
+      <div class="stat-card__value accent">₹{{ "%.2f"|format(stats.total_spent) }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__label">Transactions</div>
+      <div class="stat-card__value">{{ stats.transaction_count }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__label">Avg per Transaction</div>
+      <div class="stat-card__value">₹{{ "%.2f"|format(stats.avg_transaction) }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__label">Largest Expense</div>
+      <div class="stat-card__value">₹{{ "%.2f"|format(stats.largest_expense) }}</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+
+    <div class="chart-panel">
+      <p class="chart-panel__title">Monthly Spending (last 6 months)</p>
+      <div class="chart-wrap">
+        <canvas id="monthlyChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-panel">
+      <p class="chart-panel__title">Spending by Category</p>
+      <div class="chart-wrap">
+        <canvas id="categoryChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  {% else %}
+
+  <div class="analytics-empty">
+    <p>No expenses recorded yet.</p>
+    <p><a href="{{ url_for('add_expense') }}">Add your first expense</a> to see analytics here.</p>
+  </div>
+
+  {% endif %}
+
+</section>
+{% endblock %}
+
+{% block scripts %}
+{% if has_data %}
+<script>
+  const MONTHLY_LABELS = {{ monthly_labels | safe }};
+  const MONTHLY_DATA   = {{ monthly_data   | safe }};
+  const CAT_LABELS     = {{ cat_labels     | safe }};
+  const CAT_DATA       = {{ cat_data       | safe }};
+
+  const PALETTE = [
+    'rgba(26,71,42,.85)',   // accent (dark green)
+    'rgba(193,127,36,.85)', // accent-2 (amber)
+    'rgba(100,160,120,.85)',
+    'rgba(220,160,60,.85)',
+    'rgba(60,120,180,.85)',
+    'rgba(180,80,80,.85)',
+    'rgba(120,80,180,.85)',
+  ];
+
+  // Bar chart — monthly trend
+  new Chart(document.getElementById('monthlyChart'), {
+    type: 'bar',
+    data: {
+      labels: MONTHLY_LABELS,
+      datasets: [{
+        label: 'Spent (₹)',
+        data: MONTHLY_DATA,
+        backgroundColor: 'rgba(26,71,42,.75)',
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { callback: v => '₹' + v },
+          grid: { color: 'rgba(0,0,0,.06)' }
+        },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // Donut chart — category breakdown
+  new Chart(document.getElementById('categoryChart'), {
+    type: 'doughnut',
+    data: {
+      labels: CAT_LABELS,
+      datasets: [{
+        data: CAT_DATA,
+        backgroundColor: PALETTE.slice(0, CAT_LABELS.length),
+        borderWidth: 2,
+        borderColor: '#fff',
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { boxWidth: 12, padding: 14, font: { size: 12 } }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ' ₹' + ctx.parsed.toFixed(2)
+          }
+        }
+      },
+      cutout: '62%',
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

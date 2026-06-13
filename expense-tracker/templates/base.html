@@ -20,7 +20,12 @@
             </a>
             <div class="nav-links">
                 {% if g.user %}
-                <a href="{{ url_for('profile') }}">Profile</a>
+                <a href="{{ url_for('analytics') }}"
+                   class="{% if request.endpoint == 'analytics' %}active{% endif %}">Analytics</a>
+                <a href="{{ url_for('add_expense') }}"
+                   class="{% if request.endpoint == 'add_expense' %}active{% endif %}">Add Expense</a>
+                <a href="{{ url_for('profile') }}"
+                   class="{% if request.endpoint == 'profile' %}active{% endif %}">Profile</a>
                 <a href="{{ url_for('logout') }}">Logout</a>
                 {% else %}
                 <a href="{{ url_for('login') }}">Sign in</a>
@@ -29,6 +34,19 @@
             </div>
         </div>
     </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="toast-container">
+      {% for category, message in messages %}
+      <div class="toast toast--{{ category }}">
+        <span class="toast-message">{{ message }}</span>
+        <button class="toast-close" onclick="this.parentElement.remove()">✕</button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
 
     <main class="main-content">
         {% block content %}{% endblock %}
@@ -45,6 +63,11 @@
     </footer>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+      document.querySelectorAll('.toast').forEach(function(t) {
+        setTimeout(function() { t.style.opacity='0'; t.style.transition='opacity 0.4s'; setTimeout(function(){ t.remove(); }, 400); }, 3000);
+      });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

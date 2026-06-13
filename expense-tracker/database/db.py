@@ -92,6 +92,71 @@ def seed_db():
         conn.close()
 
 
+def insert_expense(user_id, amount, category, date, description):
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            'INSERT INTO expenses (user_id, amount, category, date, description) '
+            'VALUES (?, ?, ?, ?, ?)',
+            (user_id, amount, category, date, description or None)
+        )
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
+
+
+def get_monthly_totals(user_id, months=6):
+    """Return monthly spending totals for the last N months, including months with no spend."""
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            "SELECT strftime('%Y-%m', date) AS month, SUM(amount) AS total "
+            "FROM expenses "
+            "WHERE user_id = ? "
+            "AND date >= date('now', ? || ' months', 'start of month') "
+            "GROUP BY strftime('%Y-%m', date) "
+            "ORDER BY month ASC",
+            (user_id, -(months - 1))
+        )
+        rows = {row['month']: float(row['total']) for row in cursor.fetchall()}
+    finally:
+        conn.close()
+
+    # Build a full list for all N months, filling gaps with 0
+    from datetime import date as _date
+    result = []
+    today = _date.today()
+    for i in range(months - 1, -1, -1):
+        if today.month - i <= 0:
+            m = today.replace(year=today.year - 1, month=today.month - i + 12)
+        else:
+            m = today.replace(month=today.month - i, day=1)
+        key = m.strftime('%Y-%m')
+        result.append({'month': m.strftime('%b %Y'), 'total': rows.get(key, 0.0)})
+    return result
+
+
+def get_analytics_stats(user_id):
+    """Return aggregate stats for the analytics page."""
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            'SELECT SUM(amount), COUNT(*), AVG(amount), MAX(amount) '
+            'FROM expenses WHERE user_id = ?',
+            (user_id,)
+        )
+        row = cursor.fetchone()
+        return {
+            'total_spent':        round(float(row[0] or 0), 2),
+            'transaction_count':  int(row[1] or 0),
+            'avg_transaction':    round(float(row[2] or 0), 2),
+            'largest_expense':    round(float(row[3] or 0), 2),
+        }
+    finally:
+        conn.close()
+
+
 def get_user_by_email(email):
     conn = get_db()
     try:
