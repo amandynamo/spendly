@@ -242,6 +242,34 @@ def get_profile_stats(user_id, start_date=None, end_date=None):
         conn.close()
 
 
+def get_expense_by_id(expense_id, user_id):
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            'SELECT id, amount, category, date, description FROM expenses '
+            'WHERE id = ? AND user_id = ?',
+            (expense_id, user_id)
+        )
+        row = cursor.fetchone()
+        return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def update_expense(expense_id, user_id, amount, category, date, description):
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            'UPDATE expenses SET amount = ?, category = ?, date = ?, description = ? '
+            'WHERE id = ? AND user_id = ?',
+            (amount, category, date, description or None, expense_id, user_id)
+        )
+        conn.commit()
+        return cursor.rowcount
+    finally:
+        conn.close()
+
+
 def delete_expense(expense_id, user_id):
     conn = get_db()
     try:

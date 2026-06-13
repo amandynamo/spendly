@@ -89,9 +89,12 @@
                             </td>
                             <td class="amount">₹{{ "%.2f"|format(t.amount) }}</td>
                             <td>
-                                <form method="POST" action="/expenses/{{ t.id }}/delete">
-                                    <button type="submit" class="btn-delete" onclick="return confirm('Delete this expense?')">Delete</button>
-                                </form>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <a href="/expenses/{{ t.id }}/edit" class="btn-edit">Edit</a>
+                                    <form method="POST" action="/expenses/{{ t.id }}/delete">
+                                        <button type="submit" class="btn-delete" onclick="return confirm('Delete this expense?')">Delete</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
